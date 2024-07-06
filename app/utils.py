@@ -1,6 +1,8 @@
+from datetime import datetime
 from app.database import Clan, User, General, Session, Tank, All_General
 from app.request import Request_player, Request_clan
-import time
+
+# import time
 import asyncio
 from config import LIMITED
 from logging import getLogger, FileHandler, Formatter, INFO
@@ -85,6 +87,13 @@ class PlayerInterface:
                 result.append(Stats(old_ses=old, now_ses=now).get_stats())
         if result:
             result.append(Stats.get_general())
+            result.append(
+                {
+                    "time": datetime.now().replace(microsecond=0)
+                    - datetime.strptime(self.time, "%d-%m-%Y %H:%M:%S"),
+                    "name": self.name,
+                }
+            )
             return result
         return "Сыграйте один бой в рандоме"
 
@@ -259,7 +268,8 @@ class Stats:
             ),
         }
         cls.restart()
-        return data
+
+        return cls.color(data)
 
     @classmethod
     def restart(cls):
@@ -272,10 +282,12 @@ class Stats:
         cls.damage_rece = 0
 
     def get_stats(self):
+        stats = {}
+        stats["Имя"] = self.name
         if hasattr(self, "tier"):
-            stats = {
-                "Имя": self.name,
-                "Уровень": self.tier,
+            stats["Уровень"] = self.tier
+        stats.update(
+            {
                 "Бои": self.battles,
                 "Победы": round(self.wins / self.battles * 100, 2),
                 "Средний урон": round(self.damage / self.battles, 2),
@@ -289,23 +301,31 @@ class Stats:
                     else round(self.damage / self.damage_rece, 2)
                 ),
             }
-        else:
-            stats = {
-                "Имя": self.name,
-                "Бои": self.battles,
-                "Победы": round(self.wins / self.battles * 100, 2),
-                "Средний урон": round(self.damage / self.battles, 2),
-                "Точность": (
-                    0 if self.shots == 0 else round(self.hits / self.shots * 100, 2)
-                ),
-                "Выживаемость": round(self.survival / self.battles * 100, 2),
-                "КПД": (
-                    0
-                    if self.damage_rece == 0
-                    else round(self.damage / self.damage_rece, 2)
-                ),
-            }
-        return stats
+        )
+        return self.color(stats)
+
+    @staticmethod
+    def color(data: dict):
+        colors = {}
+        thresholds = {
+            "Победы": [(50, 60, "green"), (60, 70, "blue"), (70, 100, "purple")],
+            "Средний урон": [
+                (2500, 2800, "green"),
+                (2800, 3200, "blue"),
+                (3200, float("inf"), "purple"),
+            ],
+            "Точность": [(80, 85, "green"), (85, 90, "blue"), (90, 100, "purple")],
+            "Выживаемость": [(50, 60, "green"), (60, 70, "blue"), (70, 100, "purple")],
+        }
+        for param, ranges in thresholds.items():
+            value = data[param]
+            for start, end, color in ranges:
+                if start <= value <= end if end == 100 else start <= value < end:
+                    colors[param] = color
+                    break
+                colors[param] = None
+        data["color"] = colors
+        return data
 
 
 class Container_class:

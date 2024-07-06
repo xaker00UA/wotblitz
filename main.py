@@ -28,8 +28,10 @@ def main(page: Page):
     }
 
     def nav(e):
+
         index = page.navigation_bar.selected_index
         page.clean()
+        print(index)
         if index == 0:
             page.add(pages["page1"])
         elif index == 1:
@@ -39,8 +41,16 @@ def main(page: Page):
 
     page.navigation_bar = NavigationBar(
         destinations=[
-            NavigationDestination(icon=icons.EXPLORE, label="Player"),
-            NavigationDestination(icon=icons.COMMUTE, label="Clans"),
+            NavigationDestination(
+                icon=icons.VERIFIED_USER_OUTLINED,
+                selected_icon=icons.VERIFIED_USER_ROUNDED,
+                label="Player",
+            ),
+            NavigationDestination(
+                icon=icons.SUPERVISED_USER_CIRCLE_OUTLINED,
+                selected_icon=icons.SUPERVISED_USER_CIRCLE_ROUNDED,
+                label="Clans",
+            ),
             NavigationDestination(
                 icon=icons.BOOKMARK_BORDER,
                 selected_icon=icons.BOOKMARK,
