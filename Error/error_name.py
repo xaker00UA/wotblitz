@@ -5,11 +5,17 @@ class Not_Found_Player(Exception):
         else:
             self.message = None
 
-    def __str__(self):
+    def __repr__(self):
         if self.message:
             return f"Not_Found_Player, {self.message}"
         else:
             return "Not_Found_Player has been raised"
+
+    def __str__(self):
+        if self.message:
+            return f"{self.message}"
+        else:
+            return "Player not found"
 
 
 class ConnectionError(Exception):

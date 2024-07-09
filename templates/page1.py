@@ -146,7 +146,6 @@ class Middle(Row):
                         vertical_alignment="center",
                         scroll=True,)]#ERROR
         except Exception as e:
-            print(e)
             data = data if "data" in locals() else None
             self.text = Text(value=(data or e),color='red',size=32)
         finally:

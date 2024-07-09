@@ -1,2 +1,5 @@
+from flet import *
+
+
 def main(page):
-    pass
+    return Container()
