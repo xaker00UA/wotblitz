@@ -140,16 +140,26 @@ class ClanInterface:
             return res
         res = []
         for i in range(len(self.now_ses)):
-            try:
-                old = Player(**self.old_ses[i])
-            except:
-                old = Player(**self.now_ses[i])
+            old = None
+            for j in range(len(self.old_ses)):
+                if self.old_ses[j].get("id") == self.now_ses[i].get("id"):
+                    old = Player(**self.old_ses[j])
+            if not old:
+                continue
             now = Player(**self.now_ses[i])
             if old.__ne__(now):
                 res.append(Stats(old, now).get_stats())
         if res:
             res.append(Stats.get_general())
+            res.append(
+                {
+                    "time": datetime.now().replace(microsecond=0)
+                    - datetime.strptime(self.time, "%d-%m-%Y %H:%M:%S"),
+                    "name": self.name,
+                }
+            )
             return res
+        return f"В клане {self.clan_tag} никто не сыграл еще ни боя"
 
 
 class Parameters:

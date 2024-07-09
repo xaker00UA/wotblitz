@@ -24,7 +24,7 @@ class Up(Row):
         super(Up, self).__init__(height=150, alignment=MainAxisAlignment.SPACE_BETWEEN)
         self.handlers = event
         self.text = TextField(
-            label="nickname", value="xake_r777", on_submit=self.on_click_search
+            label="nickname", on_submit=self.on_click_search
         )
         self.page = page
         self.theme = IconButton(icon="SUNNY", on_click=self.change_theme)
@@ -48,6 +48,8 @@ class Up(Row):
         if self.text.value:
             asyncio.run(PlayerInterface(name=self.text.value).reset())
             self.add_menu(self.text.value)
+        else:
+            self.handlers.emit('start_session')
 
     def on_click_search(self, e):
         if self.text.value:
@@ -168,11 +170,15 @@ class Middle(Row):
     def change_update(self, e):
         if hasattr(self, "player"):
             self.build_content(name=self.player.name)
+    def start(self):
+        if hasattr(self, "player"):
+            asyncio.run(self.player.reset())
 
     def handler(self):
         self.event.on("update", self.change_update)
         self.event.on("text_button", self.build_content)
         self.event.on("period", self.period)
+        self.event.on("start_session", self.start)
 
 
 class Down(Row):

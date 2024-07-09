@@ -28,10 +28,8 @@ def main(page: Page):
     }
 
     def nav(e):
-
         index = page.navigation_bar.selected_index
         page.clean()
-        print(index)
         if index == 0:
             page.add(pages["page1"])
         elif index == 1:
@@ -52,9 +50,9 @@ def main(page: Page):
                 label="Clans",
             ),
             NavigationDestination(
-                icon=icons.BOOKMARK_BORDER,
-                selected_icon=icons.BOOKMARK,
-                label="Player period",
+                icon=icons.SETTINGS_OUTLINED,
+                selected_icon=icons.SETTINGS,
+                label="Settings",
             ),
         ],
         on_change=nav,
