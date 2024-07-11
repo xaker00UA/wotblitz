@@ -1,7 +1,9 @@
+import json
 from flet import *
 from .page1 import Up, Middle, Down, Event
 from app import ClanInterface, Clan
 import asyncio
+from config import CLANS, SESSION
 
 
 class Up_clan(Up):
@@ -22,6 +24,15 @@ class Up_clan(Up):
             self.add_menu(self.text.value)
         else:
             self.handlers.emit("start_session")
+        self.text.value = ""
+        self.text.update()
+
+    def handler(self):
+        for line in CLANS:
+            self.add_menu(line)
+        if SESSION:
+            for line in CLANS:
+                asyncio.run(ClanInterface(name=line).day_sessions())
 
 
 class Middle_clan(Middle):
@@ -29,7 +40,7 @@ class Middle_clan(Middle):
         super().__init__(page=page, event=event)
 
     def crate_player(self, name):
-        self.player = ClanInterface(name=name)
+        self.player = ClanInterface(clan_tag=name)
 
     def build_content(self, name, trigger: str = None):
         super().build_content(name, trigger)

@@ -1,0 +1,16 @@
+{
+    "limited": 10,
+    "application_id": "6645d2ba41b7ded38e934bd6fdd48d05",
+    "database": "mongodb://localhost:27017/",
+    "players": [
+        "xakerUA",
+        "xake_r777",
+        "sofiikow",
+        "SoloBebrik"
+    ],
+    "clans": [
+        "Nocsu",
+        "WN7ED"
+    ],
+    "start_session": false
+}

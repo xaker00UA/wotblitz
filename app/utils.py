@@ -2,7 +2,7 @@ from datetime import datetime
 from app.database import Clan, User, General, Session, Tank, All_General
 from app.request import Request_player, Request_clan
 
-# import time
+import time
 import asyncio
 from config import LIMITED
 from logging import getLogger, FileHandler, Formatter, INFO
@@ -50,7 +50,9 @@ class PlayerInterface:
             self.old_ses = old.get("all")
             self.now_ses = data["all"]
 
-    async def reset(self):
+    async def reset(
+        self,
+    ):
         data = await self.player.player_session()
         Session().add(data)
         All_General().add(data)
@@ -102,6 +104,12 @@ class PlayerInterface:
         for dat in data:
             Tank().add(dat)
 
+    async def day_sessions(self):
+        data = Session().get_name(self.name)
+        if not datetime.now().strftime("%d-%m-%Y") in data.get("data"):
+            self.user_id = data.get("id")
+            await self.reset()
+
     def __repr__(self) -> str:
         return f"Игрок {self.name}, id {self.user_id}"
 
@@ -134,6 +142,17 @@ class ClanInterface:
         data = await self.clan.clan()
         Clan().add(data)
 
+    async def reset_many(self):
+        await self.clan.clan_members()
+        data = await self.clan.clan()
+        Clan().add(data)
+
+    async def day_sessions(self):
+        data = Clan().get_name(self.name)
+        if not datetime.now().strftime("%d-%m-%Y") in data.get("data"):
+            self.clan_id = data.get("clan_id")
+            await self.reset()
+
     async def results(self):
         res = await self.update()
         if res:
@@ -155,10 +174,11 @@ class ClanInterface:
                 {
                     "time": datetime.now().replace(microsecond=0)
                     - datetime.strptime(self.time, "%d-%m-%Y %H:%M:%S"),
-                    "name": self.name,
+                    "name": self.clan_tag,
                 }
             )
             return res
+
         return f"В клане {self.clan_tag} никто не сыграл еще ни боя"
 
 
@@ -339,13 +359,15 @@ class Stats:
 
 
 class Container_class:
+    SEMAPHORE = asyncio.Semaphore(LIMITED)
+
     def __init__(self):
         self.players: list[PlayerInterface] = []
         self.clans: list[ClanInterface] = []
         self.task = []
         self.total_task = 0
         self.completed_tasks = 0
-        self.semaphore = asyncio.Semaphore(LIMITED)
+        self.semaphore = self.SEMAPHORE
 
     def add(self, other):
         if isinstance(other, PlayerInterface):
@@ -359,25 +381,33 @@ class Container_class:
         asyncio.run(self.update_clan())
         asyncio.run(self.update_player())
 
-    async def update_clan(self):
+    async def update_clan(self, fun):
+        self.get_clan()
         for clan in self.clans:
             self.total_task += 1
-            self.task.append(clan.reset())
-        await self.run_task()
+            self.task.append(clan.reset_many())
+        await self.run_task(fun)
 
-    async def update_player(self):
+    async def update_player(self, fun):
+        self.get_player()
         for player in self.players:
             self.total_task += 1
             self.task.append(player.reset())
-        await self.run_task()
+        await self.run_task(fun)
 
-    async def run_task(self):
-        async def run(сoruntina):
+    async def run_task(self, fun):
+        async def run_task(task, fun):
             async with self.semaphore:
-                await сoruntina
-                self.completed_tasks += 1
+                await self.run(task, fun)
 
-        await asyncio.gather(*[run(task) for task in self.task])
+        await asyncio.gather(*[run_task(task, fun) for task in self.task])
+        self.task.clear()
+
+    async def run(self, сoruntina, fun):
+        await сoruntina
+        self.completed_tasks += 1
+        fun.value = self.completed_tasks / self.total_task
+        fun.update()
 
     def get_clan(
         self,

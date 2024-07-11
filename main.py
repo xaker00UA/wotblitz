@@ -28,14 +28,15 @@ def main(page: Page):
     }
 
     def nav(e):
-        index = page.navigation_bar.selected_index
-        page.clean()
-        if index == 0:
-            page.add(pages["page1"])
-        elif index == 1:
-            page.add(pages["page2"])
-        elif index == 2:
-            page.add(pages["page3"])
+        if not page.navigation_bar.disabled:
+            index = page.navigation_bar.selected_index
+            page.clean()
+            if index == 0:
+                page.add(pages["page1"])
+            elif index == 1:
+                page.add(pages["page2"])
+            elif index == 2:
+                page.add(pages["page3"])
 
     page.navigation_bar = NavigationBar(
         destinations=[
@@ -57,7 +58,7 @@ def main(page: Page):
         ],
         on_change=nav,
     )
-    page.add(pages["page1"])
+    page.add(pages["page3"])
 
 
 if __name__ == "__main__":

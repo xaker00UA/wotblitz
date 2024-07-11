@@ -16,6 +16,7 @@ logger.addHandler(handler)
 logger.propagate = True
 
 
+# plaeyr
 class Base:
     CLUSTER = MongoClient(DATABASE)
     DATABASE = CLUSTER["test"]
@@ -33,6 +34,12 @@ class Base:
     def get(self, user_id: int) -> dict | None:
         return self._collection.find_one(filter={self._key: user_id})
 
+    def get_name(self, name):
+        return self._collection.find_one(
+            {self._name: {"$regex": name, "$options": "i"}},
+            {self._key: True, "_id": False, "data": True},
+        )
+
     def get_all_id(self) -> list[dict]:
         return list(
             self._collection.find(
@@ -46,7 +53,11 @@ class Base:
 
 class Session(Base):
     def __init__(self):
-        super().__init__("Session", key_name="nickname")
+        super().__init__("Session", key_name="nickname", key="id")
+
+    def delete(self, count):
+        for i in range(count):
+            self._collection.delete_one({})
 
 
 class User(Base):

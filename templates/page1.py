@@ -1,9 +1,10 @@
 import asyncio
+import json
 from typing import Callable
 from flet import *
 from app import All_General, PlayerInterface, User
-
-
+from config import PLAYERS,SESSION
+from app.utils import timer
 class Event:
     def __init__(self) -> None:
         self._listener: dict[str, list[Callable]] = {}
@@ -17,7 +18,7 @@ class Event:
         if event in self._listener:
             for listener in self._listener[event]:
                 listener(data)
-
+        
 
 class Up(Row):
     def __init__(self, event: Event, page: Page):
@@ -46,10 +47,14 @@ class Up(Row):
 
     def start_session(self, e):
         if self.text.value:
+            self.handlers.emit("pause")
             asyncio.run(PlayerInterface(name=self.text.value).reset())
+            self.handlers.emit("start")
             self.add_menu(self.text.value)
         else:
-            self.handlers.emit('start_session')
+            self.handlers.emit(event='start_session')
+        self.text.value =""
+        self.update()
 
     def on_click_search(self, e):
         if self.text.value:
@@ -64,13 +69,13 @@ class Up(Row):
 
     def on_click_menu(self, e):
         self.handlers.emit(f"text_button", data=e.control.text)
+        self.drop_list(e.control.text)
 
     def add_menu(self, n):
         for item in self.menu.items:
             if item.text == n:
                 return
         self.menu.items.append(PopupMenuItem(text=n, on_click=self.on_click_menu))
-        self.update()
 
     def drop_list(self, n):
         self.drop.options.clear()
@@ -84,8 +89,11 @@ class Up(Row):
         self.page.update()
 
     def handler(self):
-        pass
-
+            for line in PLAYERS:
+                self.add_menu(line)
+            if SESSION:
+                for line in PLAYERS:
+                    asyncio.run(PlayerInterface(line).day_sessions())
 
 class Middle(Row):
     def __init__(self, event: Event, page: Page):
@@ -104,7 +112,6 @@ class Middle(Row):
                 horizontal_alignment="center",
             )
         ]
-
         self.event = event
         self.page = page
         self.handler()
@@ -113,6 +120,7 @@ class Middle(Row):
         self.player = PlayerInterface(name=name)
 
     def build_content(self, name, trigger: str = None):
+        self.pause()
         self.controls[0].clean()
         self.crate_player(name=name)
         try:
@@ -153,7 +161,7 @@ class Middle(Row):
         finally:
             self.controls[0].controls.insert(0,self.text)
             self.controls[0].controls.insert(0,Divider(height=5,color="transparent"))
-            self.update()
+            self.page_start()
 
     def sorting(self, e: DataColumnSortEvent):
         index = e.column_index
@@ -164,21 +172,35 @@ class Middle(Row):
         self.state[index] = not ascending
         self.table.update()
 
+    def pause(self,*args):
+        self.page.controls[0].disabled = True
+        self.page.navigation_bar.disabled = True
+        self.page.update()
+    def page_start(self,*args):
+        self.page.controls[0].disabled = False
+        self.page.navigation_bar.disabled = False
+        self.page.update()
     def period(self, period):
         self.build_content(name=self.player.name, trigger=period)
 
     def change_update(self, e):
         if hasattr(self, "player"):
             self.build_content(name=self.player.name)
-    def start(self):
+    @timer
+    def start(self,e):
         if hasattr(self, "player"):
+            self.pause()
             asyncio.run(self.player.reset())
+            self.page_start()
 
     def handler(self):
         self.event.on("update", self.change_update)
         self.event.on("text_button", self.build_content)
         self.event.on("period", self.period)
         self.event.on("start_session", self.start)
+        self.event.on("pause", self.pause)
+        self.event.on("start", self.page_start)
+
 
 
 class Down(Row):
