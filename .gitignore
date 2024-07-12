@@ -3,8 +3,5 @@ __pycache__
 .VSCodeCounter
 Log
 test
-players.txt
-players copy.txt
-test.py
-test_flet.py
-view_to_concole.py
+REDMU.md
+requirements.txt
