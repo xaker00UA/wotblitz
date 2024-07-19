@@ -1,7 +1,7 @@
 __pycache__
 .vscode
 .VSCodeCounter
-Log
+Log/*
 test
 REDMU.md
 requirements.txt
